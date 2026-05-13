@@ -1,0 +1,17 @@
+---
+title: "Bonus Lab"
+author: "Grace Boye-Williams and Nidhi Sathish"
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+    toc: true
+    html-table-processing: none
+editor: source
+execute: 
+  error: true
+  echo: true
+  message: false
+  warning: false
+---
+
