@@ -1,4 +1,5 @@
 # STAT331-FinalProject
 
-Authors: Grace Boye-Williams (gboyewil@calpoly.edu), Nidhi Sathish (npsathis@calpoly.edu)
+Author 1: Grace Boye-Williams (gboyewil@calpoly.edu)
+Author 2: Nidhi Sathish (npsathis@calpoly.edu)
 
