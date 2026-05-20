@@ -7,7 +7,9 @@ Author 2: Nidhi Sathish (npsathis@calpoly.edu)
 
 In this lab, we will use two datasets related to jobs, salaries, and cost of living in the United States. The first dataset includes linkedin job postings taken from 2023-2024 and includes information such as job title, industry, company, salary estimates, location and job level. Since the data was taken from real job postings, many variables may contain missing values or inconsistent formatting, especially salary information and job titles. 
 
-## Some important variables from the LinkedIn dataset include:
+The second dataset contains estimated cost of living information for counties and metro areas across the United States. This includes cost related to housing, healthcare, food, transportation and median income. This dataset allows for comparison between salaries and living costs across different locations. 
+
+## Variables from the LinkedIn dataset
 
 - `title`: title of the job posting
 - `location`: location of the job posting
@@ -18,9 +20,7 @@ In this lab, we will use two datasets related to jobs, salaries, and cost of liv
 - `remote_allowed`: whether the position allows remote work
 - `applies`: number of submitted applications
 
-The second dataset contains estimated cost of living information for counties and metro areas across the United States. This includes cost related to housing, healthcare, food, transportation and median income. This dataset allows for comparison between salaries and living costs across different locations. 
-
-## Some important variables from the cost of living dataset include:
+## Variables from the Cost of Living dataset
 
 - `state`: state where the county is located
 - `county`: county name
