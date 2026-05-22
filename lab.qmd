@@ -1,5 +1,5 @@
 ---
-title: "Bonus Lab"
+title: "Bonus Lab: LinkedIn Job Postings and Cost of Living in the United States"
 author: "Grace Boye-Williams and Nidhi Sathish"
 format: 
   html:
@@ -16,7 +16,7 @@ execute:
 ---
 
 ## The Data
-In this lab we're going to look at data regarding LinkedIn job postings from this [dataset](https://www.kaggle.com/datasets/arshkon/linkedin-job-postings) as well as a dataset containing the estimated cost of living across counties and metro areas within the United States which can be found [here](https://www.kaggle.com/datasets/asaniczka/us-cost-of-living-dataset-3171-counties). More detailed information on the datasets can be found in the [Readme]().
+In this lab we're going to look at data regarding LinkedIn job postings from this [dataset](https://www.kaggle.com/datasets/arshkon/linkedin-job-postings) as well as a dataset containing the estimated cost of living across counties and metro areas within the United States which can be found [here](https://www.kaggle.com/datasets/asaniczka/us-cost-of-living-dataset-3171-counties). More detailed information on the datasets can be found in the [Readme](https://github.com/gracebw7/STAT331-FinalProject).
 
 ## Downloading the Data
 
@@ -53,6 +53,7 @@ cost of living:
 **1. Clean the jobs posting data by completing the following steps in a single pipeline. Save the result as `clean_jobs`**
 - Extract the two-letter state abbreviation from the `location` column into a new column called `state`
 - Extract everything before the first comma in `location` into a new column called `city`
+  - Then remove everything after '-' and trim
 - rename `normalized_salary` to `salary`
 - Keep only the columns: `job_id`, `title`, `city`, `state`, `salary`, `currency`, `company_name`, `company_id`.
 - Drop any rows where `salary`, `city`, or `state` is `NA`.
@@ -79,18 +80,21 @@ clean_jobs <- job_postings |>
 **2. Clean the cost of living data by completing the following steps in a single pipeline. Save the result as `clean_living`**
 - Extract the two-letter state abbreviation from `areaname` into a new `state` column.
 - Extract everything before the first comma in `areaname` into a new `city` column.
+- Some city names are like "Los Angeles-Long Beach-Glendale", use `seperate_rows` to separate these entries into different cities based on '-'.
 - Keep only rows where `family_member_count` is `"1p0c"` (a single adult with no children), then drop the `family_member_count` column.
 - for each city, state there are multiple entries (from different counties within one city), summarize the costs by taking the mean for each cost.
 - Keep only the columns: `state`, `city`, `housing_cost`, `food_cost`, `transportation_cost`, `healthcare_cost`, `other_necessities_cost`, `taxes`, `total_cost`, `median_family_income`.
-*Checkpoint: there should be 2552 observations remaining*
+*Checkpoint: there should be 2767 observations remaining*
 ``` {r clean cost}
 clean_living <- cost_of_living |>
   mutate(
     state = str_extract(areaname, "\\b[A-Z]{2}\\b"),
-    city  = str_extract(areaname, "^[^,]+")|>
-      str_remove("-.*$") |>
-      str_trim()
+    city  = str_extract(areaname, "^[^,]+"),
   )|>
+  separate_rows(city, sep = "-") |>
+  mutate(
+    city = str_trim(city)
+  ) |>
   filter(
     family_member_count == "1p0c"
   ) |>
@@ -139,7 +143,7 @@ jobs_with_cost <- clean_jobs |>
     salary_tier = salary_tier(salary, total_cost)
   ) |>
   filter(
-    is.na(adjusted_salary)
+    !is.na(adjusted_salary)
   )
   
 ```
