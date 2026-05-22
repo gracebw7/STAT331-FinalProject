@@ -18,11 +18,24 @@ execute:
 ## The Data
 In this lab we're going to look at data regarding LinkedIn job postings from this [dataset](https://www.kaggle.com/datasets/arshkon/linkedin-job-postings) as well as a dataset containing the estimated cost of living across counties and metro areas within the United States which can be found [here](https://www.kaggle.com/datasets/asaniczka/us-cost-of-living-dataset-3171-counties). More detailed information on the datasets can be found in the [Readme]().
 
+## Downloading the Data
+
+Both datasets must be downloaded from Kaggle before running this lab. 
+
+Steps to download:
+1. Create a free account at [kaggle.com](https://www.kaggle.com) if you do not already have one.
+2. Download the **LinkedIn Job Postings** dataset [here](https://www.kaggle.com/datasets/arshkon/linkedin-job-postings). From the dataset page, click the **Download** button. Unzip the downloaded folder and locate the file named `postings.csv`.
+3. Download the **US Cost of Living** dataset [here](https://www.kaggle.com/datasets/asaniczka/us-cost-of-living-dataset-3171-counties). Click **Download** and locate the file named `cost_of_living_us.csv`.
+4. In your RStudio project, create a folder called `data/` at the root level.
+5. Move both `postings.csv` and `cost_of_living_us.csv` into the `data/` folder.
+
+
 **0. Load the appropriate libraries and the data**
 ```{r setup}
 #load libraries
 library(tidyverse)
 library(knitr)
+library(stringr)
 ```
 
 ```{r load_data}
@@ -32,41 +45,101 @@ job_postings <- read_csv("./data/postings.csv")
 
 ```
 
-##Clean The Data
-cost of living:
-- clean area names like "Knoxville, TN HUD Metro FMR Area" to just "Knoxville, TN"
-- keep cols state, isMetro, areaname, county, family_member_count, housing_cost, food_cost, total_cost, median_family_income
-- only keep rows where family_member_count is "1p0c" and then drop family member count column
+## Cleaning The Data
 
-job_postings:
-- keep cols job_id, company_name, title, description, normalized_salary, location, company_id, currency
-- some type of cleaning on location since some are city, state, country; city, state; state, country; etc.
+Before we can analyze these datasets together, both need to be cleaned. The location fields in particular are messy. `job_postings` contains a mix of formats such as `"Chicago, IL"`, `"New York, United States"`, and `"Greater Houston"`, while `cost_of_living` contains area names like `"Knoxville, TN HUD Metro FMR Area"` that need to be simplified. We will extract city and state from both datasets so that they can eventually be joined.
+cost of living:
+
+**1. Clean the jobs posting data by completing the following steps in a single pipeline. Save the result as `clean_jobs`**
+- Extract the two-letter state abbreviation from the `location` column into a new column called `state`
+- Extract everything before the first comma in `location` into a new column called `city`
+- rename `normalized_salary` to `salary`
+- Keep only the columns: `job_id`, `title`, `city`, `state`, `salary`, `currency`, `company_name`, `company_id`.
+- Drop any rows where `salary`, `city`, or `state` is `NA`.
+
+*Checkpoint: there should be 29888 observations remaining*
 
 
 ```{r clean jobs}
 clean_jobs <- job_postings |>
   mutate(
-    location_raw = location,
     state = str_extract(location, "\\b[A-Z]{2}\\b"),
-    city  = str_extract(location, "^[^,]+")
+    city  = str_extract(location, "^[^,]+") |>
+      str_remove("-.*$") |>
+      str_trim()
   ) |>
-  select(job_id, title, location_raw, city, state, normalized_salary, description, currency, company_name, company_id) |>
+  rename(salary = normalized_salary) |>
+  select(job_id, title, city, state, salary, description, currency, company_name, company_id) |>
   filter(
-    !is.na(normalized_salary),
+    !is.na(salary),
     !is.na(city),
     !is.na(state)
   )
 ```
-
+**2. Clean the cost of living data by completing the following steps in a single pipeline. Save the result as `clean_living`**
+- Extract the two-letter state abbreviation from `areaname` into a new `state` column.
+- Extract everything before the first comma in `areaname` into a new `city` column.
+- Keep only rows where `family_member_count` is `"1p0c"` (a single adult with no children), then drop the `family_member_count` column.
+- for each city, state there are multiple entries (from different counties within one city), summarize the costs by taking the mean for each cost.
+- Keep only the columns: `state`, `city`, `housing_cost`, `food_cost`, `transportation_cost`, `healthcare_cost`, `other_necessities_cost`, `taxes`, `total_cost`, `median_family_income`.
+*Checkpoint: there should be 2552 observations remaining*
 ``` {r clean cost}
 clean_living <- cost_of_living |>
   mutate(
     state = str_extract(areaname, "\\b[A-Z]{2}\\b"),
-    city  = str_extract(areaname, "^[^,]+")
+    city  = str_extract(areaname, "^[^,]+")|>
+      str_remove("-.*$") |>
+      str_trim()
   )|>
   filter(
     family_member_count == "1p0c"
   ) |>
-  select(case_id, state, city, isMetro, county, housing_cost, food_cost, transportation_cost, healthcare_cost, other_necessities_cost, childcare_cost, taxes, total_cost, median_family_income)
+   group_by(state, city) |>
+   summarize(
+    across(
+      housing_cost:median_family_income,
+      mean,
+      na.rm = TRUE
+    ),
+    .groups = "drop"
+  ) |>
+  select(-childcare_cost)
+  
+```
+## Analyzing the Data
+
+**3. Write a vector function that takes `normalized_salary` and `total_cost` as inputs and computes the ratio of the salary to the cost of living and assigned the following values based on the ratio.** Values:
+- < 1: Below Cost of Living
+- < 1.5: Modest
+- < 2.5: Comfortable
+- >= 2.5: High 
+
+```{r salary function}
+salary_tier <- function(salary, total_cost) {
+  ratio <- salary / total_cost
+  case_when(
+    ratio < 1 ~ "Below Cost of Living",
+    ratio < 1.5 ~ "Modest",
+    ratio < 2.5 ~ "Comfortable",
+    ratio >= 2.5 ~ "High",
+  )
+}
+```
+
+**4. Join the two cleaned datasets and compute a cost of living adjusted salary**
+a. Join `clean_jobs` to `clean_living` using state and city
+b. Add a new column `adjusted_salary` which is salary - total_cost
+c. Add a new column `salary_tier` which implements the above vector function
+d. Save the new dataset as `jobs_with_cost`
+```{r joining data}
+jobs_with_cost <- clean_jobs |>
+  left_join(clean_living, by = c("state", "city")) |>
+  mutate(
+    adjusted_salary = (salary - total_cost),
+    salary_tier = salary_tier(salary, total_cost)
+  ) |>
+  filter(
+    is.na(adjusted_salary)
+  )
   
 ```
