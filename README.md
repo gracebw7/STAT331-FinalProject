@@ -16,14 +16,14 @@ The second dataset contains estimated cost of living information for counties an
 
 ## Variables from the LinkedIn dataset
 
--   `title`: title of the job posting
--   `location`: location of the job posting
--   `formatted_work_type`: type of work associated with the posting (full time, contract, etc.)
--   `formatted_experience_level`: experience level required for the position
--   `min_salary`, `med_salary`, `max_salary`: estimated salary information
--   `pay_period`: whether salary is hourly, monthly, or yearly
--   `remote_allowed`: whether the position allows remote work
--   `applies`: number of submitted applications
+-   `job_id`: Unique identifier for each job posting as defined by LinkedIn
+-   `title`: Title of the job posting
+-   `city`: City where the job is located
+-   `state`: State where the job is located
+-   `normalized_salary`: Normalized annual salary for the job posting, standardized from hourly, monthly, or yearly raw text
+-   `currency`: Currency in which the salary is provided, e.g. USD
+-   `company_name`: Name of the hiring company
+-   `company_id`: Unique identifier for the company associated with the job posting
 
 ## Variables from the Cost of Living dataset
 
