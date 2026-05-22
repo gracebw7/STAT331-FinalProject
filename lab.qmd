@@ -8,8 +8,6 @@ format:
     toc: true
     html-table-processing: none
 editor: source
-  markdown: 
-    wrap: 72
 execute: 
   error: true
   echo: true
