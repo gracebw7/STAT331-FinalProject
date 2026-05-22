@@ -15,3 +15,58 @@ execute:
   warning: false
 ---
 
+## The Data
+In this lab we're going to look at data regarding LinkedIn job postings from this [dataset](https://www.kaggle.com/datasets/arshkon/linkedin-job-postings) as well as a dataset containing the estimated cost of living across counties and metro areas within the United States which can be found [here](https://www.kaggle.com/datasets/asaniczka/us-cost-of-living-dataset-3171-counties). More detailed information on the datasets can be found in the [Readme]().
+
+**0. Load the appropriate libraries and the data**
+```{r setup}
+#load libraries
+library(tidyverse)
+library(knitr)
+```
+
+```{r load_data}
+#load data
+cost_of_living <- read_csv("./data/cost_of_living_us.csv")
+job_postings <- read_csv("./data/postings.csv")
+
+```
+
+##Clean The Data
+cost of living:
+- clean area names like "Knoxville, TN HUD Metro FMR Area" to just "Knoxville, TN"
+- keep cols state, isMetro, areaname, county, family_member_count, housing_cost, food_cost, total_cost, median_family_income
+- only keep rows where family_member_count is "1p0c" and then drop family member count column
+
+job_postings:
+- keep cols job_id, company_name, title, description, normalized_salary, location, company_id, currency
+- some type of cleaning on location since some are city, state, country; city, state; state, country; etc.
+
+
+```{r clean jobs}
+clean_jobs <- job_postings |>
+  mutate(
+    location_raw = location,
+    state = str_extract(location, "\\b[A-Z]{2}\\b"),
+    city  = str_extract(location, "^[^,]+")
+  ) |>
+  select(job_id, title, location_raw, city, state, normalized_salary, description, currency, company_name, company_id) |>
+  filter(
+    !is.na(normalized_salary),
+    !is.na(city),
+    !is.na(state)
+  )
+```
+
+``` {r clean cost}
+clean_living <- cost_of_living |>
+  mutate(
+    state = str_extract(areaname, "\\b[A-Z]{2}\\b"),
+    city  = str_extract(areaname, "^[^,]+")
+  )|>
+  filter(
+    family_member_count == "1p0c"
+  ) |>
+  select(case_id, state, city, isMetro, county, housing_cost, food_cost, transportation_cost, healthcare_cost, other_necessities_cost, childcare_cost, taxes, total_cost, median_family_income)
+  
+```
