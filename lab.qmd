@@ -42,8 +42,8 @@ library(knitr)
 library(stringr)
 ```
 
-```{r load_data}
-#load data
+```{r}
+#| label: load-data
 cost_of_living <- read_csv("./data/cost_of_living_us.csv")
 job_postings <- read_csv("./data/postings.csv")
 
@@ -53,30 +53,66 @@ job_postings <- read_csv("./data/postings.csv")
 
 Before we can analyze these datasets together, both need to be cleaned. The location fields in particular are messy. `job_postings` contains a mix of formats such as `"Chicago, IL"`, `"New York, United States"`, and `"Greater Houston"`, while `cost_of_living` contains area names like `"Knoxville, TN HUD Metro FMR Area"` that need to be simplified. We will extract city and state from both datasets so that they can eventually be joined. cost of living:
 
-**1. Clean the jobs posting data by completing the following steps in a single pipeline.** Save the result as **`clean_jobs`**
+**1. To help with cleaning, create a vector function to standardize the state names**
+- Create a lookup that matches state abbreviations to their full names using R's built-in `state.abb` and `state.name` constants.
+- The function should accept a character vector and return the two-letter state abbreviation, handling both full state names and existing abbreviations.
 
-\- Extract the two-letter state abbreviation from the `location` column into a new column called `state`
+:::callout-tip
+Use this helper function inside the cleaning pipelines below, it uses R's built in state constants.
+:::
+```{r}
+#| label: helper-function
+extract_state <- function(text_chunk) {
+  # Create the dictionary using built-in R constants
+  state_lookup <- state.abb
+  names(state_lookup) <- state.name
+    case_when(
+      # If it's a full state name, look up its abbreviation
+      text_chunk %in% names(state_lookup) ~ state_lookup[text_chunk],
+      
+      # If it's already a 2-letter uppercase word, extract it
+      str_detect(text_chunk, "\\b[A-Z]{2}\\b") ~ str_extract(text_chunk, "\\b[A-Z]{2}\\b"),
+      
+      # Default if not a state entry
+      TRUE ~ NA_character_
+    )
+  }
+```
 
-\- Extract everything before the first comma in `location` into a new column called `city` - Then remove everything after '-' and trim
+**2. Clean the jobs posting data by completing the following steps in a single pipeline.** Save the result as **`clean_jobs`**
 
+\- Extract 2 strings from the `location` column, use the helper above to find which part contains the state, if the state is the second part, the first part must be the city, if the state is the first part, the city is `NA`
+\- Extract the city and state information into 2 new columns `state` and `city`
 \- rename `normalized_salary` to `salary`
-
 \- Keep only the columns: `job_id`, `title`, `city`, `state`, `salary`, `currency`, `company_name`, `company_id`.
-
 \- Drop any rows where `salary`, `city`, or `state` is `NA`.
 
 *Checkpoint: there should be 29888 observations remaining*
 
-```{r clean jobs}
+```{r}
+#| label: clean-jobs
 clean_jobs <- job_postings |>
+  
   mutate(
-    state = str_extract(location, "\\b[A-Z]{2}\\b"),
-    city  = str_extract(location, "^[^,]+") |>
-      str_remove("-.*$") |>
-      str_trim()
-  ) |>
+    # Isolate parts to verify if the first part was actually a state name
+    part_before = str_extract(location, "^[^,]+") |> str_trim(),
+  
+    part_after = str_extract(location, "[^,]+$") |> str_trim(),
+    
+    state = coalesce(
+      extract_state(part_after),
+      extract_state(part_before)
+    ),
+    
+    # If part_before matches a state name or code, then no city exists.
+    # Otherwise, clean the city name.
+    city = case_when(
+      !is.na(extract_state(part_before)) ~ NA_character_,
+      TRUE ~ part_before |> str_remove("-.*$") |> str_trim()
+    )
+  )|>
   rename(salary = normalized_salary) |>
-  select(job_id, title, city, state, salary, description, currency, company_name, company_id) |>
+  select(job_id, title, city, state, salary, currency, company_name, company_id) |>
   filter(
     !is.na(salary),
     !is.na(city),
@@ -84,7 +120,8 @@ clean_jobs <- job_postings |>
   )
 ```
 
-**2. Clean the cost of living data by completing the following steps in a single pipeline.** Save the result as **`clean_living`**
+
+**3. Clean the cost of living data by completing the following steps in a single pipeline.** Save the result as **`clean_living`**
 
 \- Extract the two-letter state abbreviation from `areaname` into a new `state` column.
 
@@ -98,9 +135,10 @@ clean_jobs <- job_postings |>
 
 \- Keep only the columns: `state`, `city`, `housing_cost`, `food_cost`, `transportation_cost`, `healthcare_cost`, `other_necessities_cost`, `taxes`, `total_cost`, `median_family_income`.
 
-*Checkpoint: there should be 2767 observations remaining*
+*Checkpoint: there should be 2,767 observations remaining*
 
-```{r clean cost}
+```{r}
+#| label: clean-living
 clean_living <- cost_of_living |>
   mutate(
     state = str_extract(areaname, "\\b[A-Z]{2}\\b"),
@@ -128,7 +166,7 @@ clean_living <- cost_of_living |>
 
 ## Analyzing the Data
 
-**3. Write a vector function that takes `normalized_salary` and `total_cost` as inputs and computes the ratio of the salary to the cost of living and assigned the following values based on the ratio.**
+**4. Write a vector function that takes `normalized_salary` and `total_cost` as inputs and computes the ratio of the salary to the cost of living and assigned the following values based on the ratio.**
 
 Values:
 
@@ -140,7 +178,8 @@ Values:
 
 -   \>= 2.5: High
 
-```{r salary function}
+```{r}
+#| label: salary-tier-function
 salary_tier <- function(salary, total_cost) {
   ratio <- salary / total_cost
   case_when(
@@ -160,7 +199,8 @@ b\. Add a new column `adjusted_salary` which is salary - total_cost
 
 c\. Add a new column `salary_tier` which implements the above vector function d. Save the new dataset as `jobs_with_cost`
 
-```{r joining data}
+```{r}
+#| label: join-data
 jobs_with_cost <- clean_jobs |>
   left_join(clean_living, by = c("state", "city")) |>
   mutate(
@@ -170,5 +210,4 @@ jobs_with_cost <- clean_jobs |>
   filter(
     !is.na(adjusted_salary)
   )
-  
 ```
