@@ -293,9 +293,9 @@ jobs_with_cost |>
 
 **9. Suppose you where randomly assigned a job in the state with the most job postings, in 10,000 simulations, what percent of the time is your job's salary tier above the cost of living?**
 
-/1. Identify the state with the most job postings, then filter the dataset to just that state
-/2. Simulate randomly assigning someone a job by sampling 10,000 jobs
-/3. Calculate the percentage of simulated jobs where the salary_tier is not "Below Cost of Living"
+\1. Identify the state with the most job postings, then filter the dataset to just that state
+\2. Simulate randomly assigning someone a job by sampling 10,000 jobs
+\3. Calculate the percentage of simulated jobs where the salary_tier is not "Below Cost of Living"
 
 :::callout-hint
 Use map_int to run the simulation!
