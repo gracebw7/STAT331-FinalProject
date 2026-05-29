@@ -22,7 +22,6 @@ In this lab we're going to look at data regarding LinkedIn job postings from thi
 ## Downloading the Data
 
 Both datasets must be downloaded from Kaggle before running this lab.
-test
 
 **Steps to download:**
 
