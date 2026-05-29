@@ -40,6 +40,7 @@ Both datasets must be downloaded from Kaggle before running this lab.
 library(tidyverse)
 library(knitr)
 library(stringr)
+library(kableExtra)
 ```
 
 ```{r}
@@ -87,7 +88,9 @@ extract_state <- function(text_chunk) {
 \- Keep only the columns: `job_id`, `title`, `city`, `state`, `salary`, `currency`, `company_name`, `company_id`.
 \- Drop any rows where `salary`, `city`, or `state` is `NA`.
 
-*Checkpoint: there should be 29888 observations remaining*
+:::callout-checkpoint
+There should be 27,964 observations remaining
+:::
 
 ```{r}
 #| label: clean-jobs
@@ -134,8 +137,9 @@ clean_jobs <- job_postings |>
 \- for each city, state there are multiple entries (from different counties within one city), summarize the costs by taking the mean for each cost.
 
 \- Keep only the columns: `state`, `city`, `housing_cost`, `food_cost`, `transportation_cost`, `healthcare_cost`, `other_necessities_cost`, `taxes`, `total_cost`, `median_family_income`.
-
-*Checkpoint: there should be 2,767 observations remaining*
+:::callout-checkpoint
+There should be 2,767 observations remaining
+:::
 
 ```{r}
 #| label: clean-living
@@ -180,7 +184,7 @@ Values:
 
 ```{r}
 #| label: salary-tier-function
-salary_tier <- function(salary, total_cost) {
+assign_salary_tier <- function(salary, total_cost) {
   ratio <- salary / total_cost
   case_when(
     ratio < 1 ~ "Below Cost of Living",
@@ -199,15 +203,100 @@ b\. Add a new column `adjusted_salary` which is salary - total_cost
 
 c\. Add a new column `salary_tier` which implements the above vector function d. Save the new dataset as `jobs_with_cost`
 
+:::callout-checkpoint
+There should be 14,473 observations remaining
+:::
+
 ```{r}
 #| label: join-data
 jobs_with_cost <- clean_jobs |>
   left_join(clean_living, by = c("state", "city")) |>
   mutate(
     adjusted_salary = (salary - total_cost),
-    salary_tier = salary_tier(salary, total_cost)
+    salary_tier = assign_salary_tier(salary, total_cost)
   ) |>
   filter(
     !is.na(adjusted_salary)
   )
 ```
+
+**5. Write a function called summarize_col that takes a dataframe, a grouping column, and a numeric column and returns a summary table with the mean, min, max, and count for the numeric column in each group**
+
+```{r}
+#| label: summarize-function
+
+summarize_col <- function(df, group_col, num_col) {
+  df |>
+    group_by({{ group_col }}) |>
+    summarize(
+      "mean" = mean({{ num_col }}, na.rm = TRUE),
+      "min" = min({{ num_col }},  na.rm = TRUE),
+      "max"= max({{ num_col }},  na.rm = TRUE),
+      "count" = n(),
+      .groups = "drop"
+    )
+}
+```
+**6. Use kable and kableExtra to make a table to show the summarized adjusted salaries grouped by salary tier.**
+
+```{r}
+#| label: summarize-col-table
+
+summarize_col(jobs_with_cost, salary_tier, adjusted_salary) |>
+  kable(
+    col.names   = c("Salary Tier", "Mean", "Min", "Max", "Count"),
+    digits = 0,
+    format.args = list(big.mark = ",")
+  ) |>
+  kable_styling(
+    full_width        = FALSE,
+    bootstrap_options = "striped"
+  ) |>
+  add_header_above(c(" " = 1, "Adjusted Salary (USD)" = 4))
+```
+**7. It looks like their might be some outliers, write a function that can be used to filter outliers. Then use it to filter out jobs with salaries over 1,000,000**
+
+
+```{r}
+#| label: filter-outliers
+
+filter_outliers <- function(df, col, min_val, max_val) {
+  df |>
+    filter({{ col }} >= min_val,
+           {{ col }} <= max_val)
+}
+
+```
+
+After run this code chunk to test your function:
+```{r}
+#| label: test-filtering
+jobs_with_cost |> 
+  filter_outliers(
+    salary, 
+    min_val = 0, 
+    max_val = 1000000
+  ) |>
+  mutate(
+    adjusted_salary = (salary - total_cost),
+    salary_tier = assign_salary_tier(salary, total_cost)
+  ) 
+
+```
+**8. Create a visual to show the distribution of salary tiers across the top 3 states with the most job postings**
+
+```{r}
+#| label: visualize-states
+
+
+```
+
+**9. Suppose you where randomly assigned a job in the state with the most job postings, in 10,000 simulations, what percent of the time is your job's salary tier above the cost of living?**
+
+/1. Identify the state with the most job postings, then filter the dataset to just that state
+/2. Simulate randomly assigning someone a job by sampling 10,000 jobs
+/3. Calculate the percentage of simulated jobs where the salary_tier is not "Below Cost of Living"
+
+:::callout-hint
+Use map_int to run the simulation!
+:::
