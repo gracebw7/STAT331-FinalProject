@@ -288,6 +288,20 @@ jobs_with_cost |>
 ```{r}
 #| label: visualize-states
 
+top_3_states <- jobs_with_cost |>
+  count(state, sort = TRUE) |>
+  slice_head(n = 3)
+
+jobs_with_cost |>
+  semi_join(top_3_states, by = "state") |>
+  ggplot(aes(x = state, fill = salary_tier)) +
+  geom_bar() +
+  labs(
+    title = "Salary Tiers in the Top 3 States",
+    x = "State",
+    y = "Number of Jobs",
+    fill = "Salary Tier"
+  )
 
 ```
 
@@ -305,6 +319,22 @@ Use map_int for the simulation
 
 ```{r}
 #| label: simulate-jobs
+
+top_state <- jobs_with_cost |>
+    count(state, sort = TRUE) |>
+    slice_head(n = 1) |>
+    pull(state)
+
+top_state_jobs <- jobs_with_cost |>
+    filter(state == top_state)
+
+sim_results <- map_int(1:10000, function(i) {
+  sample_job <- top_state_jobs |>
+  slice_sample(n = 1)
+  sample_job$salary_tier != "Below Cost of Living"
+})
+
+mean(sim_results) * 100
 
 ```
 
