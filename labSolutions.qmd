@@ -81,7 +81,7 @@ extract_state <- function(text_chunk) {
 
 **2. Clean the jobs posting data by completing the following steps in a single pipeline.** Save the result as **`clean_jobs`**
 
--   Extract 2 strings from the `location` column, use the helper above to find which part contains the state, if the state is the second part, the first part must be the city, if the state is the first part, the city is `NA`
+-   Separate the `location` column into 2 strings (one before the comma and one after) Use the helper above to find which part contains the state, if the state is the second part, the first part must be the city, if the state is the first part, the city is `NA`
 
 -   Extract the city and state information into 2 new columns `state` and `city`
 
@@ -91,7 +91,7 @@ extract_state <- function(text_chunk) {
 
 -   Drop any rows where `salary`, `city`, or `state` is `NA`.
 
-::: callout-checkpoint
+::: callout-tip
 There should be 27,964 observations remaining
 :::
 
@@ -138,7 +138,10 @@ clean_jobs <- job_postings |>
 
 -   for each city, state there are multiple entries (from different counties within one city), summarize the costs by taking the mean for each cost.
 
--   Keep only the columns: `state`, `city`, `housing_cost`, `food_cost`, `transportation_cost`, `healthcare_cost`, `other_necessities_cost`, `taxes`, `total_cost`, `median_family_income`. :::callout-checkpoint There should be 2,767 observations remaining
+-   Keep only the columns: `state`, `city`, `housing_cost`, `food_cost`, `transportation_cost`, `healthcare_cost`, `other_necessities_cost`, `taxes`, `total_cost`, `median_family_income`. 
+:::callout-tip 
+There should be 2,767 observations remaining
+:::
 
 ```{r}
 #| label: clean-living
@@ -202,7 +205,7 @@ assign_salary_tier <- function(salary, total_cost) {
 
 -   Add a new column `salary_tier` which implements the above vector function d. Save the new dataset as `jobs_with_cost`
 
-::: callout-checkpoint
+::: callout-tip
 There should be 14,473 observations remaining
 :::
 
