@@ -1,0 +1,239 @@
+---
+title: "Bonus Lab: LinkedIn Job Postings and Cost of Living in the United States"
+authors: "Grace Boye-Williams and Nidhi Sathish"
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+    toc: true
+    html-table-processing: none
+editor: source
+execute: 
+  error: true
+  echo: true
+  message: false
+  warning: false
+---
+
+## The Data
+
+In this lab we're going to look at data regarding LinkedIn job postings from this [dataset](https://www.kaggle.com/datasets/arshkon/linkedin-job-postings) as well as a dataset containing the estimated cost of living across counties and metro areas within the United States which can be found [here](https://www.kaggle.com/datasets/asaniczka/us-cost-of-living-dataset-3171-counties). More detailed information on the datasets can be found in the [Readme](https://github.com/gracebw7/STAT331-FinalProject).
+
+## Downloading the Data
+
+Both datasets must be downloaded from Kaggle before running this lab.
+
+**Steps to download:**
+
+1\. Create a free account at [kaggle.com](https://www.kaggle.com) if you do not already have one.
+
+2\. Download the **LinkedIn Job Postings** dataset [here](https://www.kaggle.com/datasets/arshkon/linkedin-job-postings). From the dataset page, click the download button. Unzip the downloaded folder and locate the file named `postings.csv`. 3. Download the **US Cost of Living** dataset [here](https://www.kaggle.com/datasets/asaniczka/us-cost-of-living-dataset-3171-counties). Click download and locate the file named `cost_of_living_us.csv`.
+
+4\. In your RStudio project, create a folder called `data/` at the root level.
+
+5\. Move both `postings.csv` and `cost_of_living_us.csv` into the `data/` folder.
+
+**0. Load the appropriate libraries and the data**
+
+```{r setup}
+#load libraries
+library(tidyverse)
+library(knitr)
+library(stringr)
+library(kableExtra)
+```
+
+```{r}
+#| label: load-data
+cost_of_living <- read_csv("./data/cost_of_living_us.csv")
+job_postings <- read_csv("./data/postings.csv")
+
+```
+
+## Cleaning The Data
+
+Before we can analyze these datasets together, both need to be cleaned. The location fields in particular are messy. `job_postings` contains a mix of formats such as `"Chicago, IL"`, `"New York, United States"`, and `"Greater Houston"`, while `cost_of_living` contains area names like `"Knoxville, TN HUD Metro FMR Area"` that need to be simplified. We will extract city and state from both datasets so that they can eventually be joined. cost of living:
+
+**1. To help with cleaning, create a vector function to standardize the state names** - Create a lookup that matches state abbreviations to their full names using R's built-in `state.abb` and `state.name` constants. - The function should accept a character vector and return the two-letter state abbreviation, handling both full state names and existing abbreviations.
+
+::: callout-tip
+Use this helper function inside the cleaning pipelines below, it uses R's built in state constants.
+:::
+
+```{r}
+#| label: helper-function
+extract_state <- function(text_chunk) {
+  # Create the dictionary using built-in R constants
+  state_lookup <- state.abb
+  names(state_lookup) <- state.name
+    case_when(
+      # If it's a full state name, look up its abbreviation
+      text_chunk %in% names(state_lookup) ~ state_lookup[text_chunk],
+      
+      # If it's already a 2-letter uppercase word, extract it
+      str_detect(text_chunk, "\\b[A-Z]{2}\\b") ~ str_extract(text_chunk, "\\b[A-Z]{2}\\b"),
+      
+      # Default if not a state entry
+      TRUE ~ NA_character_
+    )
+  }
+```
+
+**2. Clean the jobs posting data by completing the following steps in a single pipeline.** Save the result as **`clean_jobs`**
+
+-   Extract 2 strings from the `location` column, use the helper above to find which part contains the state, if the state is the second part, the first part must be the city, if the state is the first part, the city is `NA`
+
+-   Extract the city and state information into 2 new columns `state` and `city`
+
+-   Rename `normalized_salary` to `salary`
+
+-   Keep only the columns: `job_id`, `title`, `city`, `state`, `salary`, `currency`, `company_name`, `company_id`.
+
+-   Drop any rows where `salary`, `city`, or `state` is `NA`.
+
+::: callout-tip
+There should be 27,964 observations remaining
+:::
+
+```{r}
+#| label: clean-jobs
+#Your code goes here
+  
+```
+
+**3. Clean the cost of living data by completing the following steps in a single pipeline.** Save the result as **`clean_living`**
+
+-   Extract the two-letter state abbreviation from `areaname` into a new `state` column.
+
+-   Extract everything before the first comma in `areaname` into a new `city` column.
+
+-   Some city names are like "Los Angeles-Long Beach-Glendale", use `seperate_rows` to separate these entries into different cities based on '-' [hint](https://tidyr.tidyverse.org/reference/separate_rows.html)
+
+-   Keep only rows where `family_member_count` is `"1p0c"` (a single adult with no children), then drop the `family_member_count` column.
+
+-   for each city, state there are multiple entries (from different counties within one city), summarize the costs by taking the mean for each cost.
+
+-   Keep only the columns: `state`, `city`, `housing_cost`, `food_cost`, `transportation_cost`, `healthcare_cost`, `other_necessities_cost`, `taxes`, `total_cost`, `median_family_income`. 
+
+:::callout-tip 
+There should be 2,767 observations remaining
+:::
+
+```{r}
+#| label: clean-living
+#Your code goes here
+```
+
+## Analyzing the Data
+
+**4. Write a vector function that takes `normalized_salary` and `total_cost` as inputs and computes the ratio of the salary to the cost of living and assigned the following values based on the ratio.**
+
+Values:
+
+-   \< 1: Below Cost of Living
+
+-   \< 1.5: Modest
+
+-   \< 2.5: Comfortable
+
+-   \>= 2.5: High
+
+```{r}
+#| label: salary-tier-function
+assign_salary_tier <- function(salary, total_cost) {
+  #Your code goes here
+}
+```
+
+**4. Join the two cleaned datasets and compute a cost of living adjusted salary**
+
+-   Join `clean_jobs` to `clean_living` using state and city
+
+-   Add a new column `adjusted_salary` which is salary - total_cost
+
+-   Add a new column `salary_tier` which implements the above vector function d. Save the new dataset as `jobs_with_cost`
+
+::: callout-tip
+There should be 14,473 observations remaining
+:::
+
+```{r}
+#| label: join-data
+#Your code goes here
+```
+
+**5. Write a function called summarize_col that takes a dataframe, a grouping column, and a numeric column and returns a summary table with the mean, min, max, and count for the numeric column in each group**
+
+```{r}
+#| label: summarize-function
+
+summarize_col <- function(df, group_col, num_col) {
+  #Your code goes here
+}
+```
+
+**6. Use kable and kableExtra to make a table to show the summarized adjusted salaries grouped by salary tier.**
+
+```{r}
+#| label: summarize-col-table
+#Your code goes here
+```
+
+**7. It looks like their might be some outliers, write a function that can be used to filter outliers. Then use it to filter out jobs with salaries over 1,000,000**
+
+```{r}
+#| label: filter-outliers
+
+#Your code goes here
+```
+
+After run this code chunk to test your function:
+
+```{r}
+#| label: test-filtering
+jobcost_clean <- jobs_with_cost |> 
+  filter_outliers(
+    salary, 
+    min_val = 0, 
+    max_val = 1000000
+  ) |>
+  mutate(
+    adjusted_salary = (salary - total_cost),
+    salary_tier = assign_salary_tier(salary, total_cost)
+  ) 
+
+jobcost_clean |>
+    summarise(
+    min_sal = min(salary, na.rm = TRUE),
+    max_sal = max(salary, na.rm = TRUE)
+  )
+
+```
+
+**8. Create a visual to show the distribution of salary tiers across the top 3 states with the most job postings**
+
+```{r}
+#| label: visualize-states
+
+#Your code goes here
+
+```
+
+**9. Suppose you where randomly assigned a job in the state with the most job postings, in 10,000 simulations, what percent of the time is your job's salary tier above the cost of living?**
+
+-   Identify the state with the most job postings, then filter the dataset to just that state
+
+-   Simulate randomly assigning someone a job by sampling 10,000 jobs
+
+-   Calculate the percentage of simulated jobs where the salary_tier is not "Below Cost of Living"
+
+::: callout-tip
+Use map_int for the simulation
+:::
+
+```{r}
+#| label: simulate-jobs
+
+#Your code goes here
+
+```
