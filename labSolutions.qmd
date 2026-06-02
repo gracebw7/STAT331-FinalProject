@@ -139,6 +139,7 @@ clean_jobs <- job_postings |>
 -   for each city, state there are multiple entries (from different counties within one city), summarize the costs by taking the mean for each cost.
 
 -   Keep only the columns: `state`, `city`, `housing_cost`, `food_cost`, `transportation_cost`, `healthcare_cost`, `other_necessities_cost`, `taxes`, `total_cost`, `median_family_income`. 
+
 :::callout-tip 
 There should be 2,767 observations remaining
 :::
@@ -330,6 +331,7 @@ Use map_int for the simulation
 ```{r}
 #| label: simulate-jobs
 
+
 top_state <- jobcost_clean |>
     count(state, sort = TRUE) |>
     slice_head(n = 1) |>
@@ -338,6 +340,7 @@ top_state <- jobcost_clean |>
 top_state_jobs <- jobcost_clean |>
     filter(state == top_state)
 
+set.seed(8787)
 sim_results <- map_int(1:10000, function(i) {
   sample_job <- top_state_jobs |>
   slice_sample(n = 1)
