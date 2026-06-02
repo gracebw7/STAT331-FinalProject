@@ -352,6 +352,7 @@ mean(sim_results) * 100
 
 ```{bash}
 #| label: dataset-references
+#| eval: false
 @misc{arsh_koneru_2024,
 	title={LinkedIn Job Postings (2023 - 2024)},
 	url={https://www.kaggle.com/dsv/9200871},
