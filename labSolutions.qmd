@@ -247,12 +247,12 @@ summarize_col <- function(df, group_col, num_col) {
 
 summarize_col(jobs_with_cost, salary_tier, adjusted_salary) |>
   kable(
-    col.names   = c("Salary Tier", "Mean", "Min", "Max", "Count"),
+    col.names = c("Salary Tier", "Mean", "Min", "Max", "Count"),
     digits = 0,
     format.args = list(big.mark = ",")
   ) |>
   kable_styling(
-    full_width        = FALSE,
+    full_width = FALSE,
     bootstrap_options = "striped"
   ) |>
   add_header_above(c(" " = 1, "Adjusted Salary (USD)" = 4))
@@ -347,3 +347,28 @@ sim_results <- map_int(1:10000, function(i) {
 mean(sim_results) * 100
 
 ```
+
+**Dataset References**
+
+```{bash}
+#| label: dataset-references
+@misc{arsh_koneru_2024,
+	title={LinkedIn Job Postings (2023 - 2024)},
+	url={https://www.kaggle.com/dsv/9200871},
+	DOI={10.34740/KAGGLE/DSV/9200871},
+	publisher={Kaggle},
+	author={Arsh Koneru},
+	year={2024}
+}
+
+@misc{epi_org_asaniczka_2023,
+	title={US Cost of Living Dataset (1877 Counties)},
+	url={https://www.kaggle.com/ds/3832881},
+	DOI={10.34740/KAGGLE/DS/3832881},
+	publisher={Kaggle},
+	author={epi.org and Asaniczka},
+	year={2023}
+}
+```
+
+

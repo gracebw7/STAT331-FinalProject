@@ -237,3 +237,25 @@ Use map_int for the simulation
 #Your code goes here
 
 ```
+**Dataset References**
+
+```{bash}
+#| label: dataset-references
+@misc{arsh_koneru_2024,
+	title={LinkedIn Job Postings (2023 - 2024)},
+	url={https://www.kaggle.com/dsv/9200871},
+	DOI={10.34740/KAGGLE/DSV/9200871},
+	publisher={Kaggle},
+	author={Arsh Koneru},
+	year={2024}
+}
+
+@misc{epi_org_asaniczka_2023,
+	title={US Cost of Living Dataset (1877 Counties)},
+	url={https://www.kaggle.com/ds/3832881},
+	DOI={10.34740/KAGGLE/DS/3832881},
+	publisher={Kaggle},
+	author={epi.org and Asaniczka},
+	year={2023}
+}
+```
