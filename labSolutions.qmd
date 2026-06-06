@@ -299,18 +299,29 @@ jobcost_clean |>
 ```{r}
 #| label: visualize-states
 
-top_3_states <- jobcost_clean |>
+top_3_states <- jobs_with_cost |>
   count(state, sort = TRUE) |>
   slice_head(n = 3)
 
-jobcost_clean |>
-  semi_join(top_3_states, by = "state") |>
+jobs_with_cost |>
+  filter(state %in% top_3_states$state) |>
+  mutate(
+    salary_tier = factor(
+      salary_tier,
+      levels = c(
+        "Below Cost of Living",
+        "Modest",
+        "Comfortable",
+        "High"
+      )
+    )
+  ) |>
   ggplot(aes(x = state, fill = salary_tier)) +
-  geom_bar() +
+  geom_bar(position = "fill") +
   labs(
-    title = "Salary Tiers in the Top 3 States",
+    title = "Salary Tier Distribution in the Top 3 States",
     x = "State",
-    y = "Number of Jobs",
+    y = "Percent of Jobs",
     fill = "Salary Tier"
   )
 
